@@ -1,21 +1,28 @@
 interface IconTypes extends HTMLElement {
-  type: string;
-  path: string;
-  size: string;
-  viewbox: string;
-  flip: { x: string, y: string };
-  rotate: string;
-  defaults: defaultIcons;
-	connectedCallback(): void;
-	attributeChangedCallback(attributeName: string, oldValue: string, newValue: string): void;
+  readonly type: string;
+  readonly path: string;
+  readonly size: string;
+  readonly viewbox: string;
+  readonly flip: {
+    readonly x: string;
+    readonly y: string;
+  };
+  readonly rotate: string;
+  readonly defaults: defaultIcons;
+  connectedCallback(): void;
+  attributeChangedCallback(
+    attributeName: string,
+    oldValue: string | null,
+    newValue: string | null
+  ): void;
 }
 
 interface defaultIcons {
-  size: number,
-	viewbox: string,
+  readonly size: number;
+  readonly viewbox: string;
 }
 
-const types: {[key: string | number]: defaultIcons} = {
+const types: Record<string | number, defaultIcons> = {
 	mdi: {
 		size: 24,
 		viewbox: '0 0 24 24',
@@ -31,36 +38,34 @@ const types: {[key: string | number]: defaultIcons} = {
 }
 
 class SvgIcon extends HTMLElement {
-  static get observedAttributes() {
-		return ['type', 'path', 'size', 'viewbox', 'flip', 'rotate']
+  static get observedAttributes(): string[] {
+		return ['type', 'path', 'size', 'viewbox', 'flip', 'rotate'];
 	}
 
-	get defaults() {
-		return types[this.getAttribute('type') ?? "default"] || types.default
+	get defaults(): defaultIcons {
+		return types[this.getAttribute('type') ?? "default"] ?? types.default;
 	}
 
-	get size() {
-		return this.getAttribute('size') || this.defaults.size
+	get size(): string {
+		return this.getAttribute('size') ?? `${this.defaults.size}`;
 	}
 
-	get viewbox() {
-		return this.getAttribute('viewbox') || this.defaults.viewbox
+	get viewbox(): string {
+		return this.getAttribute('viewbox') ?? this.defaults.viewbox;
 	}
 
-	get flip() {
-		const flip = (this.getAttribute('flip') || '').toLowerCase()
+	get flip(): { readonly x: string; readonly y: string } {
+		const flip = (this.getAttribute('flip') ?? '').toLowerCase()
 		return {
 			x: ['both', 'horizontal'].includes(flip) ? '-1' : '1',
 			y: ['both', 'vertical'].includes(flip) ? '-1' : '1',
-		}
+		};
 	}
 
-	get rotate() {
-		const rotate = this.getAttribute('rotate') as unknown as number
-
-		if (!isNaN(rotate)) return rotate + 'deg'
-		return rotate
-	}
+	get rotate(): string {
+    const rotate = Number(this.getAttribute("rotate"));
+    return isNaN(rotate) ? this.getAttribute("rotate") ?? "0deg" : `${rotate}deg`;
+  }
   
   constructor(...args: []) {
     const self = super(...args) as unknown as HTMLElement;
@@ -82,52 +87,52 @@ class SvgIcon extends HTMLElement {
 
     svg.append(path);
 
-    self.shadowRoot?.append(style, svg);
+    self.shadowRoot!.append(style, svg);
 
     return self as IconTypes;
   }
 
-	connectedCallback() {
-		const svg = this.shadowRoot?.querySelector("svg");
-		const path = this.shadowRoot?.querySelector("path");
+	connectedCallback(): void {
+		const svg = this.shadowRoot?.querySelector("svg")!;
+		const path = this.shadowRoot?.querySelector("path")!;
 
-		svg?.setAttribute("width", this.size as string);
-		svg?.setAttribute("height", this.size as string);
-		svg?.setAttribute("viewBox", this.viewbox);
+		svg.setAttribute("width", this.size);
+		svg.setAttribute("height", this.size);
+		svg.setAttribute("viewBox", this.viewbox);
 
-		svg?.style.setProperty("--sx", this.flip.x);
-		svg?.style.setProperty("--sy", this.flip.y);
-		svg?.style.setProperty("--r", this.rotate as string);
+		svg.style.setProperty("--sx", this.flip.x);
+		svg.style.setProperty("--sy", this.flip.y);
+		svg.style.setProperty("--r", this.rotate);
 
-		path?.setAttribute("d", this.getAttribute("path") ?? "default");
+		path.setAttribute("d", this.getAttribute("path") ?? "default");
 	}
 
-	attributeChangedCallback(name: string, _oldValue: string, newValue: string) {
-		const svg = this.shadowRoot?.querySelector("svg");
-		const path = this.shadowRoot?.querySelector("path");
+	attributeChangedCallback(name: string, _oldValue: string, newValue: string): void {
+		const svg = this.shadowRoot?.querySelector("svg")!;
+		const path = this.shadowRoot?.querySelector("path")!;
 
 		switch(name) {
 			case "type":
-				svg?.setAttribute("width", this.size as string);
-				svg?.setAttribute("height", this.size as string);
-				svg?.setAttribute("viewBox", this.viewbox);
+				svg.setAttribute("width", this.size);
+				svg.setAttribute("height", this.size);
+				svg.setAttribute("viewBox", this.viewbox);
 				break;
 			case "path":
-				path?.setAttribute("d", newValue);
+				path.setAttribute("d", newValue);
 				break;
 			case "size":
-				svg?.setAttribute("width", this.size as string);
-				svg?.setAttribute("height", this.size as string);
+				svg.setAttribute("width", this.size);
+				svg.setAttribute("height", this.size);
 				break;
 			case "viewbox":
-				svg?.setAttribute("viewBox", this.viewbox);
+				svg.setAttribute("viewBox", this.viewbox);
 				break;
 			case "flip":
-				svg?.style.setProperty("--sx", this.flip.x);
-				svg?.style.setProperty("--sy", this.flip.y);
+				svg.style.setProperty("--sx", this.flip.x);
+				svg.style.setProperty("--sy", this.flip.y);
 				break;
 			case "rotate":
-				svg?.style.setProperty("--r", this.rotate as string);
+				svg.style.setProperty("--r", this.rotate);
 				break;
 		}
 	}
