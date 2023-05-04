@@ -1,6 +1,6 @@
-interface IconTypes extends HTMLElement {
-  readonly type: string;
-  readonly path: string;
+interface IconAttributes extends HTMLElement {
+  readonly type?: string;
+  readonly path?: string;
   readonly size: string;
   readonly viewbox: string;
   readonly flip: {
@@ -8,7 +8,7 @@ interface IconTypes extends HTMLElement {
     readonly y: string;
   };
   readonly rotate: string;
-  readonly defaults: defaultIcons;
+	readonly defaults: IconTypesConfig;
   connectedCallback(): void;
   attributeChangedCallback(
     attributeName: string,
@@ -17,33 +17,33 @@ interface IconTypes extends HTMLElement {
   ): void;
 }
 
-interface defaultIcons {
-  readonly size: number;
+interface IconTypesConfig {
+  readonly size: string;
   readonly viewbox: string;
 }
 
-const types: Record<string | number, defaultIcons> = {
+const iconTypes: { [key: string]: IconTypesConfig } = {
 	mdi: {
-		size: 24,
+		size: "24",
 		viewbox: '0 0 24 24',
 	},
 	'simple-icons': {
-		size: 24,
+		size: "24",
 		viewbox: '0 0 24 24',
 	},
 	default: {
-		size: 0,
+		size: "0",
 		viewbox: '0 0 0 0',
 	},
 }
 
-class SvgIcon extends HTMLElement {
+class SvgIcon extends HTMLElement implements IconAttributes {
   static get observedAttributes(): string[] {
 		return ['type', 'path', 'size', 'viewbox', 'flip', 'rotate'];
 	}
 
-	get defaults(): defaultIcons {
-		return types[this.getAttribute('type') ?? "default"] ?? types.default;
+	get defaults(): IconTypesConfig {
+		return iconTypes[this.getAttribute('type') ?? "default"] ?? iconTypes.default;
 	}
 
 	get size(): string {
@@ -64,7 +64,7 @@ class SvgIcon extends HTMLElement {
 
 	get rotate(): string {
     const rotate = Number(this.getAttribute("rotate"));
-    return isNaN(rotate) ? this.getAttribute("rotate") ?? "0deg" : `${rotate}deg`;
+    return Number.isNaN(rotate) ? this.getAttribute("rotate") ?? "0deg" : `${rotate}deg`;
   }
   
   constructor(...args: []) {
@@ -72,9 +72,9 @@ class SvgIcon extends HTMLElement {
 
     self.attachShadow({ mode: "open" });
 
-    const style = document.createElement('style')
-		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    const style = document.createElement('style');
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 
     style.textContent = `
       svg {
@@ -87,9 +87,9 @@ class SvgIcon extends HTMLElement {
 
     svg.append(path);
 
-    self.shadowRoot!.append(style, svg);
+    self.shadowRoot?.append(style, svg);
 
-    return self as IconTypes;
+    return self as IconAttributes;
   }
 
 	connectedCallback(): void {
